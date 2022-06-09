@@ -52,12 +52,12 @@ public:
 };
 
 // function for publishing odometry with some frequency
-void publisherThread(int frequency, RobotConnection* robot)
+void publisherThread(int frequency, ros::Publisher* pub, RobotConnection* robot)
 {
     ros::Rate rate(frequency);
 
     while (ros::ok()) {
-      odom_pub.publish( robot->getOdometry(ros::Time::now() ));
+      pub->publish( robot->getOdometry(ros::Time::now() ));
       rate.sleep();
     }
 }
@@ -67,7 +67,7 @@ int main(int argc, char **argv)
   // INIT ROS
   ros::init(argc, argv, "robot_communication");
   ros::NodeHandle nh;
-  Param param(nh);
+  Param param(&nh);
 
   // INIT ROBODOG
   RobotConnection robot(HIGHLEVEL, param.GlobalFrame, param.RobotFrame);
@@ -81,7 +81,7 @@ int main(int argc, char **argv)
   // Creating loop functions
   LoopFunc loop_udpSend("udp_send", 1./param.ControlHZ, 3, boost::bind(&RobotConnection::UDPSend, &robot));
   LoopFunc loop_udpRecv("udp_recv", 1./param.OdometryHZ, 3, boost::bind(&RobotConnection::UDPRecv, &robot));
-  std::thread odom_thread(publisherThread, param.OdometryHZ, &robot);
+  std::thread odom_thread(publisherThread, param.OdometryHZ, &odom_pub, &robot);
   loop_udpSend.start();
   loop_udpRecv.start();
   

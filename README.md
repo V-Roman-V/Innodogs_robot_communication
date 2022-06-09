@@ -42,6 +42,8 @@ It provides the functionality to send to the robot a target velocity and provide
 
 ## Parameters
 
+The parameters file is in {robot_communication}/config/config.yaml
+
 - **GlobalFrame**: Frame relative to which the robot's odometry will be published (default=*"map"*)
 
 - **RobotFrame**: Robot Frame. Needed to display position and speed in the global frame system (default=*"robot"*)
@@ -50,6 +52,13 @@ It provides the functionality to send to the robot a target velocity and provide
 
 - **VelocityTopic**: Target velocity will be subscribed to this topic (default=*"robot/target_velocity"*)
 
-- **ControlHZ**: Frequency at which the robot will update the target velocity (default=*500* #100~1000)
+- **ControlHZ**: Frequency at which the robot will update the target velocity (default=*500*)
 
 - **OdometryHZ**: Frequency with which the odometry will be published (default=*100*)
+
+
+## How to launch
+
+``` bash
+roslaunch robot_communication main.launch
+```

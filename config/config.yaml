@@ -1,0 +1,7 @@
+GlobalFrame: "map"
+RobotFrame: "robot"
+
+OdometryTopic: "robot/odometry"
+VelocityTopic: "robot/target_velocity"
+
+ControlHZ: 100

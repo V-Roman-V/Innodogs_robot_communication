@@ -4,22 +4,28 @@
 
 #include <robot_communication/connection_to_robot.hpp>
 
-struct Param{
+class Param{
+private:
+  void setStringParam(const std::string& name, std::string& param, const std::string& default){
+    if (!nh.param<std::string>(name, param, default))
+      ROS_WARN("%s parameter is set by default: %s",name, default);
+    else
+      ROS_INFO("%s parameter is set: %s", param.c_str());
+  }
+  void setIntParam(const std::string& name, int& param, const std::string& default){
+    if (!nh.param(name, param, default))
+      ROS_WARN("%s parameter is set by default: %s",name, default);
+    else
+      ROS_INFO("%s parameter is set: %s", param);
+  }
+
+public:
   Param(ros::NodeHandle& nh){
-    if (!nh.param<std::string>("GlobalFrame", GlobalFrame, "map"))
-      ROS_INFO("GlobalFrame parameter is set by default: %s\n", GlobalFrame.c_str());
-
-    if (!nh.param<std::string>("RobotFrame", RobotFrame, "robot"))
-      ROS_INFO("RobotFrame parameter is set by default: %s\n", RobotFrame.c_str());
-
-    if (!nh.param<std::string>("OdometryTopic", OdometryTopic, "robot/odometry"))
-      ROS_INFO("OdometryTopic parameter is set by default: %s\n", OdometryTopic.c_str());
-
-    if (!nh.param<std::string>("VelocityTopic", VelocityTopic, "robot/target_velocity"))
-      ROS_INFO("VelocityTopic parameter is set by default: %s\n", VelocityTopic.c_str());
-
-    if (!nh.param("controlHZ", controlHZ, 100))
-      ROS_INFO("controlHZ parameter is set by default: %d\n", controlHZ);
+    setStringParam("GlobalFrame", GlobalFrame, "map");
+    setStringParam("RobotFrame", RobotFrame, "robot");
+    setStringParam("OdometryTopic", OdometryTopic, "robot/odometry");
+    setStringParam("VelocityTopic", VelocityTopic, "robot/target_velocity");
+    setIntParam("ControlHZ", ControlHZ, 100)
   }
     
   std::string GlobalFrame;
@@ -28,7 +34,7 @@ struct Param{
   std::string OdometryTopic;
   std::string VelocityTopic;
 
-  int controlHZ;
+  int ControlHZ;
 };
 
 int main(int argc, char **argv)

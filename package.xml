@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>robot_communication</name>
+  <version>0.0.0</version>
+  <description>The robot_communication package</description>
+
+  <maintainer email="r.voronov@innopolis.university">Roman Voronov</maintainer>
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <build_export_depend>roscpp</build_export_depend>
+  <exec_depend>roscpp</exec_depend>
+  <depend>nav_msgs</depend>
+  <depend>geometry_msgs</depend>
+
+  <!-- The export tag contains other, unspecified, tags -->
+  <export></export>
+</package>

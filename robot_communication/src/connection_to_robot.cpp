@@ -3,14 +3,26 @@
 RobotConnection::RobotConnection(uint8_t level, const std::string& GlobalFrame, const std::string& RobotFrame)
     : safe(LeggedType::A1), udp(8090, "192.168.123.161", 8082, sizeof(HighCmd), sizeof(HighState)),
       GlobalFrame(GlobalFrame), RobotFrame(RobotFrame)
-{
-    udp.InitCmdData(cmd);
-}
+{udp.InitCmdData(cmd);}
 
 void RobotConnection::UDPRecv() {udp.Recv();}
 void RobotConnection::UDPSend() {udp.Send();}
-void RobotConnection::start_moving()   {enable=true;}
-void RobotConnection::stop_moving()    {enable=false;}
+void RobotConnection::start_moving() {enable=true;}
+void RobotConnection::stop_moving()  {enable=false;
+  // set default options
+  cmd.mode = 0; //  0. idle, default stand; 2. target velocity walking (controlled by velocity + yawSpeed)
+  cmd.gaitType = 0; // 0.idle  1.trot  2.trot running  3.climb stair
+  cmd.speedLevel = 0; // 0. default low speed. 1. medium speed 2. high speed. during walking, only respond MODE 3
+  cmd.footRaiseHeight = 0.08; // (unit: m, default: 0.08m), foot up height while walking
+  cmd.bodyHeight = 0.28;      // (unit: m, default: 0.28m)
+  cmd.euler[0]  = 0;
+  cmd.euler[1] = 0;
+  cmd.euler[2] = 0;
+  cmd.velocity[0] = 0.0f;  // forwardSpeed (m/s)
+  cmd.velocity[1] = 0.0f;  // sideSpeed in body frame (m/s)
+  cmd.yawSpeed = 0.0f;     // (unit: rad/s), rotateSpeed in body frame
+  udp.SetSend(cmd);
+}
 
 nav_msgs::Odometry RobotConnection::getOdometry(ros::Time stamp){
   // ROS ODOMETRY:
@@ -42,8 +54,13 @@ nav_msgs::Odometry RobotConnection::getOdometry(ros::Time stamp){
   // state.position;    // (unit: m), from own odometry in inertial frame, usually drift
   // state.velocity;    // (unit: m/s), forwardSpeed, sideSpeed, ??rotateSpeed in body frame??
 
+  // make a counter
   static uint32_t id = 0;
 
+  // update state
+  udp.GetRecv(state);
+
+  // odometry compilation
   nav_msgs::Odometry odom;
   odom.header.seq = id++;
   odom.header.stamp = stamp;
@@ -69,17 +86,7 @@ nav_msgs::Odometry RobotConnection::getOdometry(ros::Time stamp){
   return odom;
 }
 
-  
 void RobotConnection::setVelocity(const geometry_msgs::TwistConstPtr& twist){
-  //update target velocity
-  target_vel = *twist;
-}
-
-void RobotConnection::RobotControl() 
-{
-  // update state
-  udp.GetRecv(state);
-
   // set default options
   cmd.mode = 0; //  0. idle, default stand; 2. target velocity walking (controlled by velocity + yawSpeed)
   cmd.gaitType = 0; // 0.idle  1.trot  2.trot running  3.climb stair
@@ -100,10 +107,9 @@ void RobotConnection::RobotControl()
     cmd.speedLevel = 0;     
 
     // setting velocity
-    cmd.velocity[0] = target_vel.linear.x;
-    cmd.velocity[1] = target_vel.linear.y;
-    cmd.yawSpeed    = target_vel.angular.z; 
+    cmd.velocity[0] = twist->linear.x;
+    cmd.velocity[1] = twist->linear.y;
+    cmd.yawSpeed    = twist->angular.z; 
   }
-
   udp.SetSend(cmd);
 }

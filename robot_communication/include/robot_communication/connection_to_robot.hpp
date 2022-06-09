@@ -11,22 +11,30 @@ using namespace UNITREE_LEGGED_SDK;
 class RobotConnection
 {
 public:
-  RobotConnection(uint8_t level, const std::string& GlobalFrame, const std::string& RobotFrame);
+  
+  // Set the connection to the robot
+  RobotConnection(uint8_t level, const std::string& GlobalFrame, const std::string& RobotFrame);   
+  
+  //Updates data received via udp. (Runs with some frequency)
   void UDPRecv();
-  void UDPSend();
-  void RobotControl();
 
+  //Sends data from the send buffer. (Runs with some frequency) 
+  void UDPSend(); 
+
+  //Forms the odometry from the last received state
   nav_msgs::Odometry getOdometry(ros::Time stamp);
-  void setVelocity(const geometry_msgs::TwistConstPtr& twist);
 
-  void stop_moving();
-  void start_moving();
+  //Sets the target velocity for the robot
+  void setVelocity(const geometry_msgs::TwistConstPtr& twist); 
 
-  float dt = 0.002;   // 0.001~0.01
+  //Stops control of the robot
+  void stop_moving(); 
+
+  //Enables robot control 
+  void start_moving(); 
 
 private:
   bool enable = false;
-  geometry_msgs::Twist target_vel;
 
   std::string GlobalFrame;
   std::string RobotFrame;

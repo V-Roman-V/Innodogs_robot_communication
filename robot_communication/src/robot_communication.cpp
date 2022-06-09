@@ -4,6 +4,7 @@
 
 #include "robot_communication/connection_to_robot.hpp"
 
+//Sets the parameters using ros
 class Param{
 private:
   void setStringParam(const std::string& name, std::string& param, const std::string& default){

@@ -1,4 +1,4 @@
-#include <robot_communication/connection_to_robot.hpp>
+#include "robot_communication/connection_to_robot.hpp"
 
 RobotConnection::RobotConnection(uint8_t level, const std::string& GlobalFrame, const std::string& RobotFrame)
     : safe(LeggedType::A1), udp(8090, "192.168.123.161", 8082, sizeof(HighCmd), sizeof(HighState)),
@@ -42,7 +42,7 @@ nav_msgs::Odometry RobotConnection::getOdometry(ros::Time stamp){
   // state.position;    // (unit: m), from own odometry in inertial frame, usually drift
   // state.velocity;    // (unit: m/s), forwardSpeed, sideSpeed, ??rotateSpeed in body frame??
 
-  static uint32 id = 0;
+  static uint32_t id = 0;
 
   nav_msgs::Odometry odom;
   odom.header.seq = id++;

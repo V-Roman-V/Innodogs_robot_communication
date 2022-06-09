@@ -8,7 +8,7 @@ The package provides an interface for sending the desired linear and angular vel
 
 First you need to build unitree legged sdk v3.3.1 from [unitreepy/unitree_legged_sdk/](https://github.com/unitreerobotics/unitree_legged_sdk/tree/v3.3.1)
 
-1. Download and place the sdk in the **robot_communication** package
+1. Download and place the sdk in the **robot_communication** directory
 
 2. Build the sdk
 

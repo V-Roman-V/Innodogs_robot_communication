@@ -1,6 +1,8 @@
 #include <ros/ros.h>
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/Twist.h>
+#include <cassert>
+#define assertm(exp, msg) assert(((void)msg, exp))
 
 #include "robot_communication/connection_to_robot.hpp"
 
@@ -26,7 +28,14 @@ public:
     setStringParam("RobotFrame", RobotFrame, "robot");
     setStringParam("OdometryTopic", OdometryTopic, "robot/odometry");
     setStringParam("VelocityTopic", VelocityTopic, "robot/target_velocity");
-    setIntParam("ControlHZ", ControlHZ, 100)
+    setIntParam("ControlHZ", ControlHZ, 500);
+    setIntParam("OdometryHZ", OdometryHZ, 100);
+
+    if(ControlHZ == 0)
+      ROS_WARN("ControlHZ = 0, robot control is disabled");
+    if(OdometryHZ == 0)
+      ROS_WARN("OdometryHZ = 0, odometry publishing is disabled");
+    
   }
     
   std::string GlobalFrame;
@@ -36,7 +45,25 @@ public:
   std::string VelocityTopic;
 
   int ControlHZ;
+  int OdometryHZ;
 };
+
+// class for publshing odometry from robot
+class Publisher{
+public:
+  Publisher(ros::NodeHandle& nh, const std::string& topic, RobotConnection* robot)
+    :robot(robot)
+  {
+    ros::Publisher odom_pub  = nh.advertise<nav_msgs::Odometry>(topic, 10);
+  }
+  void publish(){
+    odom_pub.publish( robot->getOdometry(ros::Time::now() ));
+  }
+
+private:
+  RobotConnection* robot;
+  ros::Publisher odom_pub;
+}
 
 int main(int argc, char **argv)
 {
@@ -50,25 +77,25 @@ int main(int argc, char **argv)
   ROS_INFO("Communication start at HIGH-level.\n");
 
   // Create topics
-  ros::Publisher  odom_pub  = nh.advertise<nav_msgs::Odometry>(param.OdometryTopic, 10);
+  Publisher odom_pub(nh, param.OdometryTopic, &robot);
   ros::Subscriber twist_sub = nh.subscribe(param.VelocityTopic, 10, &RobotConnection::setVelocity, &robot); // set callback to robot.setVelocity
 
-  // Asynchronous communication with the robot
-  LoopFunc loop_udpSend("udp_send", robot.dt, 3, boost::bind(&RobotConnection::UDPSend, &robot));
-  LoopFunc loop_udpRecv("udp_recv", robot.dt, 3, boost::bind(&RobotConnection::UDPRecv, &robot));
-  loop_udpSend.start();
-  loop_udpRecv.start();
-  robot.start_moving();
-
-  ros::Rate loop_rate(param.controlHZ);
-  while (ros::ok())
-  {
-    robot.RobotControl();
-    odom_pub.publish( robot.getOdometry(ros::Time::now()) );
-    ros::spinOnce();
-    loop_rate.sleep();
+  // Creating loop functions
+  if(param.ControlHZ != 0){
+    LoopFunc loop_udpSend("udp_send", 1./param.ControlHZ, 3, boost::bind(&RobotConnection::UDPSend, &robot));
+    loop_udpSend.start();
+  }
+  if(param.OdometryHZ != 0){
+    LoopFunc loop_udpRecv("udp_recv", 1./param.OdometryHZ, 3, boost::bind(&RobotConnection::UDPRecv, &robot));
+    LoopFunc loop_pubOdom("pub_odom", 1./param.OdometryHZ,   boost::bind(&Publisher::publish,       &odom_pub));
+    loop_udpRecv.start();
+    loop_pubOdom.start();
   }
   
+  robot.start_moving();
+
+  ros::spin();
+
   robot.stop_moving();
   return 0;
 }

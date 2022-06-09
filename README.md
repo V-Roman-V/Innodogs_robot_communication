@@ -37,4 +37,19 @@ catkin_make # or catkin build
 
 ### Class ConnectionToRobot
 
-This class uses the leggett sdk to interact with the robot and sends the target speed to the robot via the interface with some frequency (). This class also provides information about the last odometry received from the robot.
+This class uses leggedd sdk to interact with the robot:
+It provides the functionality to send to the robot a target velocity and provides odometry from it.
+
+## Parameters
+
+- **GlobalFrame**: Frame relative to which the robot's odometry will be published (default=*"map"*)
+
+- **RobotFrame**: Robot Frame. Needed to display position and speed in the global frame system (default=*"robot"*)
+
+- **OdometryTopic**: Odometry data will be published in this topic (default=*"robot/odometry"*)
+
+- **VelocityTopic**: Target velocity will be subscribed to this topic (default=*"robot/target_velocity"*)
+
+- **ControlHZ**: Frequency at which the robot will update the target velocity (default=*500* #100~1000)
+
+- **OdometryHZ**: Frequency with which the odometry will be published (default=*100*)

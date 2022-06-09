@@ -8,18 +8,20 @@
 
 //Sets the parameters using ros
 class Param{
+  ros::NodeHandle nh;
+
 private:
-  void setStringParam(const std::string& name, std::string& param, const std::string& default){
-    if (!nh.param<std::string>(name, param, default))
-      ROS_WARN("%s parameter is set by default: %s",name, default);
+  void setStringParam(const std::string& name, std::string& param, const std::string& dflt){
+    if (!nh.param<std::string>(name, param, dflt))
+      ROS_WARN("%s parameter is set by default: %s",name.c_str(), dflt.c_str());
     else
-      ROS_INFO("%s parameter is set: %s", param.c_str());
+      ROS_INFO("%s parameter is set: %s",name.c_str(), param.c_str());
   }
-  void setIntParam(const std::string& name, int& param, const std::string& default){
-    if (!nh.param(name, param, default))
-      ROS_WARN("%s parameter is set by default: %s",name, default);
+  void setIntParam(const std::string& name, int& param, const int& dflt){
+    if (!nh.param(name, param, dflt))
+      ROS_WARN("%s parameter is set by default: %d",name.c_str(), dflt);
     else
-      ROS_INFO("%s parameter is set: %s", param);
+      ROS_INFO("%s parameter is set: %d",name.c_str(), param);
   }
 
 public:
@@ -36,6 +38,7 @@ public:
     if(OdometryHZ == 0)
       ROS_WARN("OdometryHZ = 0, odometry publishing is disabled");
     
+    this->nh = nh;
   }
     
   std::string GlobalFrame;
@@ -63,7 +66,7 @@ public:
 private:
   RobotConnection* robot;
   ros::Publisher odom_pub;
-}
+};
 
 int main(int argc, char **argv)
 {
@@ -80,14 +83,16 @@ int main(int argc, char **argv)
   Publisher odom_pub(nh, param.OdometryTopic, &robot);
   ros::Subscriber twist_sub = nh.subscribe(param.VelocityTopic, 10, &RobotConnection::setVelocity, &robot); // set callback to robot.setVelocity
 
+
   // Creating loop functions
+  LoopFunc loop_udpSend("udp_send", 1./param.ControlHZ, 3, boost::bind(&RobotConnection::UDPSend, &robot));
+  LoopFunc loop_udpRecv("udp_recv", 1./param.OdometryHZ, 3, boost::bind(&RobotConnection::UDPRecv, &robot));
+  LoopFunc loop_pubOdom("pub_odom", 1./param.OdometryHZ,   boost::bind(&Publisher::publish,       &odom_pub));
+  
   if(param.ControlHZ != 0){
-    LoopFunc loop_udpSend("udp_send", 1./param.ControlHZ, 3, boost::bind(&RobotConnection::UDPSend, &robot));
     loop_udpSend.start();
   }
   if(param.OdometryHZ != 0){
-    LoopFunc loop_udpRecv("udp_recv", 1./param.OdometryHZ, 3, boost::bind(&RobotConnection::UDPRecv, &robot));
-    LoopFunc loop_pubOdom("pub_odom", 1./param.OdometryHZ,   boost::bind(&Publisher::publish,       &odom_pub));
     loop_udpRecv.start();
     loop_pubOdom.start();
   }

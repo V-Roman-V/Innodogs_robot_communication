@@ -1,0 +1,6 @@
+<launch>
+	<group ns="robodog">
+		<rosparam file="$(find robot_communication)/config/config.yaml" command="load"/>
+        <node name="communication_to_robot" pkg="robot_communication" type="robot_communication" output="screen"/>
+	</group>
+</launch>
